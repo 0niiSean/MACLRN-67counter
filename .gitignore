@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Data and models (large or binary)
+data/*
+!data/README.md
+models/*
+!models/README.md
+*.tflite
+*.pt
+*.pth
+*.onnx
+
+# Databases and tracking
+*.db
+*.sqlite
+*.sqlite3
+mlruns/
+mlartifacts/
+
+# Android
+app/build/
+app/**/build/
+.gradle/
+local.properties
+*.apk
+*.aab
+*.iml
+.idea/
+captures/
+.cxx/
+
+# Video and media used for recording
+*.mp4
+*.mov
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.vscode/
