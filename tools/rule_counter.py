@@ -18,11 +18,13 @@ scaled by shoulder width so the threshold does not depend on distance.
 
 Counting (hysteresis, works frame by frame on the phone)
     1. Smooth s with a moving average of `smooth` frames.
-    2. Arm when s drops below -threshold (right hand clearly up).
-    3. Count a rep when s then rises above +threshold (left hand clearly up),
-       provided at least `min_gap_ms` passed since the last rep.
+    2. The counter starts armed, so the first left hand top counts.
+    3. Count a rep when s rises above +threshold (left hand clearly up) while
+       armed, provided at least `min_gap_ms` passed since the last rep.
+    4. Arm again when s drops below -threshold (right hand clearly up).
 
-One rep is therefore one full cycle: each hand goes up once and comes back.
+One rep is therefore each time the left hand goes to the top, as in the rep
+definition in docs/data_format.md.
 """
 
 from __future__ import annotations
@@ -55,7 +57,7 @@ class RuleCounter:
     count: int = 0
     rep_end_ms: List[int] = field(default_factory=list)
     _window: Deque[float] = field(default_factory=deque)
-    _armed: bool = False
+    _armed: bool = True
     _last_rep_ms: int = -(10**9)
 
     def update(self, t_ms: int, lm: Sequence[Sequence[float]]) -> bool:

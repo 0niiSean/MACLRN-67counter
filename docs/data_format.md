@@ -21,9 +21,9 @@ Status: **draft, waiting for team sign-off.** Each member ticks their box in the
 
 ## Rep definition (proposed)
 
-One rep is one full cycle with both hands back at the start: the left hand goes up while the right goes down, they switch, and they return to where they began. Up then down for each hand counts once, not twice.
+**One rep is counted each time the left hand reaches the top** (the right hand is down). The first time counts, even if the run starts with the left hand going up. The left hand must come down again, with the right hand up, before it can count again.
 
-When hand counting, count each time the **left hand reaches the top**. When counts differ by more than one, replay the video. A rep that is cut off by the 30 second timer does not count.
+When hand counting, count the left hand tops that happen within the 30 seconds. When counts differ by more than one, replay the video.
 
 The rule based counter in `tools/rule_counter.py` implements this definition, and the Kotlin port on the phone must match it.
 

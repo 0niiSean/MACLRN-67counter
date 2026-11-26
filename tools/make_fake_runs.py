@@ -68,7 +68,8 @@ def make_run(rng: np.random.Generator, fps: float = 30.0, duration_s: float = 30
             rate = base_rate * (1 + 0.1 * math.sin(t * 0.7)) * (1 - 0.15 * t / duration_s)
             prev = phase
             phase += 2 * math.pi * rate * dt_nominal
-            if int(prev // (2 * math.pi)) != int(phase // (2 * math.pi)):
+            # the left hand is at the top when phase passes pi/2 (mod 2 pi)
+            if (prev - math.pi / 2) // (2 * math.pi) != (phase - math.pi / 2) // (2 * math.pi):
                 rep_end_ms.append(t_ms)
         wave = math.sin(phase)
         sway = 0.01 * scale * math.sin(t * 1.3)

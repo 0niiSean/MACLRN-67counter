@@ -26,6 +26,24 @@ def test_rule_counter_close_to_truth_on_fake_runs():
         assert abs(count_run(run["frames"]).count - run["label_rep_count"]) <= 2
 
 
+def _count(signs):
+    """Count a motion given as +1 (left hand up) and -1 (right hand up), 10 frames each."""
+    frames = []
+    for i, sign in enumerate(s for s in signs for _ in range(10)):
+        lm = [[0.4, 0.4], [0.6, 0.4], [0.35, 0.5], [0.65, 0.5],
+              [0.35, 0.5 - 0.1 * sign], [0.65, 0.5 + 0.1 * sign]]
+        frames.append({"t_ms": i * 33, "lm": lm})
+    return count_run(frames).count
+
+
+def test_every_left_hand_top_counts_once():
+    assert _count([1, -1, 1, -1]) == 2      # starts left: the first top counts
+    assert _count([-1, 1, -1, 1]) == 2      # starts right
+    assert _count([1, -1, 1]) == 2          # ends on a top
+    assert _count([0, 0]) == 0              # standing still
+    assert _count([1, 0, 1, 0, 1]) == 1     # right hand never goes up, no recount
+
+
 def test_fake_payload_accepted_by_server():
     main.DB_PATH = Path(tempfile.mkdtemp()) / "test.db"
     run = payload_only(make_run(np.random.default_rng(1)))
