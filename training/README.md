@@ -27,6 +27,7 @@ Add `--weights <state_dict file>` (a path inside `training/`) to export a traine
 
 | File | Purpose |
 | --- | --- |
+| `data.py` | Loads the export, preprocesses, labels rep ends, cuts windows, splits by run or person |
 | `model.py` | `RepNet`, a small 1D CNN with the contract input and output shapes |
 | `export_tflite.py` | PyTorch to `.tflite`, with a parity check |
 | `check_tflite.py` | Checks shapes and output range, lists the ops, and times inference |
@@ -34,7 +35,7 @@ Add `--weights <state_dict file>` (a path inside `training/`) to export a traine
 ## Pipeline
 
 1. **Prove the export first.** Done with the untrained dummy model `67counter_v0.tflite` (laptop check only, still to be tested on the phone).
-2. **Data loader.** Read the training export (`labels.csv` plus `runs/*.npz`). Until real runs exist, use synthetic data: `python tools/make_fake_runs.py --n 60 --export data/fake/export` from the repo root.
+2. **Data loader.** `data.py` reads the training export (`labels.csv` plus `runs/*.npz`): `python training/data.py data/fake/export`. Until real runs exist, use synthetic data: `python tools/make_fake_runs.py --n 60 --export data/fake/export` from the repo root.
 3. **Labels.** Run `tools/rule_counter.py` on each run to get `rep_end_ms`, and keep only runs where its total matches `label_rep_count`. Turn each rep end into a positive frame (or a small Gaussian bump) in a per frame target.
 4. **Windows and splits.** Cut 60 frame windows with a stride, and split train and test by person or by run so the test set is never seen in training.
 5. **Model.** A small 1D CNN or GRU with a sigmoid per frame.

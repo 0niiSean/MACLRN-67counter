@@ -20,3 +20,5 @@ jobs:
         run: pytest -q
       - name: Shared tool and contract tests
         run: python -m pytest -q tools
+      - name: Data loader tests
+        run: python -m pytest -q training/test_data.py

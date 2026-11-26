@@ -3,6 +3,7 @@ pandas
 torch
 mlflow
 scikit-learn
+pytest
 # Runs .tflite files for checks and evaluation
 ai-edge-litert
 # TFLite export is separate (requirements-export.txt, Linux or macOS only), see README
