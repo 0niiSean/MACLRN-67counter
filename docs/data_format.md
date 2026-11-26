@@ -123,6 +123,6 @@ Then flatten to 12 values in landmark order: `[ls_x, ls_y, rs_x, rs_y, le_x, le_
 | Input | float32 `[1, 60, 12]`, the last 60 frames (about 2 s at 30 fps), oldest first |
 | Output | float32 `[1, 60]`, probability that a rep ends at each frame of the window |
 | Frame rate | Trained at 30 fps. If the phone runs much slower, A and D agree on resampling with `t_ms` |
-| Suggested decoding | Run once per new frame, read the output for frame index 54 (about 0.2 s of lookahead), count a rep when it crosses 0.5, and skip 150 ms after each rep |
+| Suggested decoding | Run once per new frame, read the output for frame index 54 (about 0.2 s of lookahead), count a rep when it crosses 0.5, and skip 150 ms after each rep. Before 60 frames exist, pad the window by repeating the first frame. When the run ends, repeat the last frame 5 more times so the final reps are read |
 
 **Naming and delivery.** Files are named `67counter_v<N>.tflite` with `N` going up by one per release, and `N` matches the MLflow run that produced it (record the run id in the MLflow run tags and in `training/README.md`). Member C copies the approved file into `models/`, and `GET /model/latest` serves the newest one. The file name in the response tells the app which version it has.

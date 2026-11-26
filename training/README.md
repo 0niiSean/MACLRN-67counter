@@ -23,14 +23,35 @@ docker run --rm -v "${PWD}:/repo" 67counter-export python export_tflite.py --out
 training\.venv\Scripts\python training\check_tflite.py models\67counter_v0.tflite
 ```
 
-Add `--weights <state_dict file>` (a path inside `training/`) to export a trained model. The export fails if the TFLite output differs from PyTorch by more than 1e-4.
+Add `--weights <state_dict file>` (a path inside the repo, relative to `training/`) to export a trained model. The export fails if the TFLite output differs from PyTorch by more than 1e-4.
 
 | File | Purpose |
 | --- | --- |
 | `data.py` | Loads the export, preprocesses, labels rep ends, cuts windows, splits by run or person |
+| `train.py` | Trains, scores on held out runs, logs to MLflow, saves weights to `models/` |
+| `evaluate.py` | Model output to rep count, metrics, and scoring of a `.tflite` file |
 | `model.py` | `RepNet`, a small 1D CNN with the contract input and output shapes |
 | `export_tflite.py` | PyTorch to `.tflite`, with a parity check |
 | `check_tflite.py` | Checks shapes and output range, lists the ops, and times inference |
+
+## Train, export, check
+
+From the repo root, with the training venv active:
+
+```bash
+python training/train.py data/export --name v1
+mlflow ui --backend-store-uri sqlite:///mlflow.db
+```
+
+Then export the weights (PowerShell, Docker running) and score the exported file:
+
+```powershell
+docker run --rm -v "${PWD}:/repo" 67counter-export python export_tflite.py --weights ../models/repnet_v1.pt --out ../models/67counter_v1.tflite
+python training/check_tflite.py models/67counter_v1.tflite
+python training/evaluate.py models/67counter_v1.tflite data/export
+```
+
+Report the test set numbers printed by `train.py`. `evaluate.py` scores every labeled run, including training runs.
 
 ## Pipeline
 

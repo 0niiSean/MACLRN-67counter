@@ -12,7 +12,7 @@ from __future__ import annotations
 import argparse
 import csv
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -23,6 +23,7 @@ from rule_counter import count_run  # noqa: E402
 WINDOW = 60          # frames, same as model.py
 STRIDE = 10
 TARGET_SIGMA = 2.0   # frames, width of the bump around each rep end
+CONDITIONS = ("lighting", "distance_m", "clothing", "speed")
 
 
 @dataclass
@@ -34,6 +35,7 @@ class Run:
     y: np.ndarray           # (T,) float32, rep end target per frame
     t_ms: np.ndarray        # (T,) int64
     rep_end_ms: np.ndarray  # from the rule based counter
+    condition: dict = field(default_factory=dict)
 
 
 def preprocess(lm: np.ndarray) -> np.ndarray:
@@ -84,7 +86,8 @@ def load_runs(export_dir: Path, tolerance: int = 0) -> tuple[list[Run], list[tup
                 continue
             ends = np.array(counter.rep_end_ms, dtype=np.int64)
             kept.append(Run(run_id, row["user_name"].strip().lower(), label,
-                            preprocess(lm), make_target(t_ms, ends), t_ms, ends))
+                            preprocess(lm), make_target(t_ms, ends), t_ms, ends,
+                            {k: row.get(k, "") for k in CONDITIONS}))
     return kept, skipped
 
 
