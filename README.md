@@ -30,9 +30,16 @@ Only landmark coordinates leave the phone. No video is uploaded.
 | `app/` | Android app (Kotlin, MediaPipe Pose, TFLite) |
 | `server/` | FastAPI service and SQLite storage |
 | `training/` | PyTorch training, MLflow tracking, TFLite export |
-| `docs/` | Data format, architecture diagram, report notes |
+| `tools/` | Shared rule based counter and synthetic run generator |
+| `docs/` | Data format and contracts, contributing guide, report notes |
 | `data/` | Local datasets (not committed) |
 | `models/` | Exported models (not committed) |
+
+## Start here
+
+1. Read `docs/CONTRIBUTING.md` for roles, setup, and the "start here" table for your role.
+2. Read `docs/data_format.md`. It holds the three contracts between the app, server, and training code.
+3. No real data yet? `tools/make_fake_runs.py` produces synthetic runs in the exact formats.
 
 ## Quick start (server)
 
@@ -50,4 +57,4 @@ Open http://localhost:8000/docs for the interactive API.
 
 Angie Olonan, April Denise Besa, Jamil So, Sean Andrei Olores
 
-See `docs/CONTRIBUTING.md` for commit conventions.
+See `docs/CONTRIBUTING.md` for roles and commit conventions. GitHub Actions runs the server and contract tests on every pull request.

@@ -2,6 +2,31 @@
 
 This is the contract between the app, the server, and the training code. Change it only with a team agreement and bump `schema_version`.
 
+It defines the three interfaces between the four areas.
+
+| Interface | From | To | Section |
+| --- | --- | --- | --- |
+| Run upload | B (app) | C (server) | [Upload payload](#upload-payload-post-runs) |
+| Training data | C (server) | D (training) | [Training export](#training-export-c-to-d) |
+| Model delivery | D (training) | A and B (app) | [Model contract](#model-contract-d-to-a-and-b) |
+
+## Sign-off
+
+Status: **draft, waiting for team sign-off.** Each member ticks their box in the pull request that changes this line to "agreed".
+
+- [ ] A
+- [ ] B
+- [ ] C
+- [ ] D
+
+## Rep definition (proposed)
+
+One rep is one full cycle with both hands back at the start: the left hand goes up while the right goes down, they switch, and they return to where they began. Up then down for each hand counts once, not twice.
+
+When hand counting, count each time the **left hand reaches the top**. When counts differ by more than one, replay the video. A rep that is cut off by the 30 second timer does not count.
+
+The rule based counter in `tools/rule_counter.py` implements this definition, and the Kotlin port on the phone must match it.
+
 ## Landmarks
 
 Six MediaPipe Pose landmarks are recorded per frame, in this fixed order.
@@ -50,3 +75,54 @@ Field notes
 ## Derived values
 
 Reps per minute is `app_rep_count / duration_s * 60`. The leaderboard uses the app count for now and will switch to the model corrected count once the model is deployed.
+
+## Training export (C to D)
+
+The server export script writes labeled runs to a folder under `data/` (never committed). By default it exports only runs with a `label_rep_count`.
+
+```
+data/export/
+  labels.csv
+  runs/
+    run_00001.npz
+    run_00002.npz
+    ...
+```
+
+`labels.csv` has one row per run, and `run_id` matches the file name.
+
+```
+run_id,user_name,device,fps,duration_s,n_frames,app_rep_count,label_rep_count,lighting,distance_m,clothing,speed,created_at
+```
+
+Each `run_XXXXX.npz` holds two arrays (load with `numpy.load`).
+
+| Key | Shape | Type | Meaning |
+| --- | --- | --- | --- |
+| `lm` | (T, 6, 2) | float32 | Landmarks per frame in the order above, raw normalized coordinates |
+| `t_ms` | (T,) | int64 | Frame time in ms from the start of recording |
+
+Synthetic exports from `tools/make_fake_runs.py --export` also include `rep_end_ms`, the true time of each rep end. Real exports do not have it, so per rep timestamps come from running the rule based counter.
+
+## Model contract (D to A and B)
+
+The model marks the moment each rep ends. Phone and training code must do the same preprocessing, so any change here needs A and D to agree.
+
+**Preprocessing per frame.** Take the six landmarks, subtract the shoulder midpoint, and divide by the shoulder width.
+
+```
+mid = (lm[0] + lm[1]) / 2
+sw  = max(|lm[1].x - lm[0].x|, 1e-3)
+x'  = (x - mid.x) / sw,   y' = (y - mid.y) / sw
+```
+
+Then flatten to 12 values in landmark order: `[ls_x, ls_y, rs_x, rs_y, le_x, le_y, re_x, re_y, lw_x, lw_y, rw_x, rw_y]`.
+
+| | Value |
+| --- | --- |
+| Input | float32 `[1, 60, 12]`, the last 60 frames (about 2 s at 30 fps), oldest first |
+| Output | float32 `[1, 60]`, probability that a rep ends at each frame of the window |
+| Frame rate | Trained at 30 fps. If the phone runs much slower, A and D agree on resampling with `t_ms` |
+| Suggested decoding | Run once per new frame, read the output for frame index 54 (about 0.2 s of lookahead), count a rep when it crosses 0.5, and skip 150 ms after each rep |
+
+**Naming and delivery.** Files are named `67counter_v<N>.tflite` with `N` going up by one per release, and `N` matches the MLflow run that produced it (record the run id in the MLflow run tags and in `training/README.md`). Member C copies the approved file into `models/`, and `GET /model/latest` serves the newest one. The file name in the response tells the app which version it has.
