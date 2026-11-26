@@ -1,0 +1,2 @@
+# Linux or macOS only, used by the Dockerfile
+litert-torch==0.10.0

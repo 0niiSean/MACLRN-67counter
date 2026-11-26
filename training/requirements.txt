@@ -3,5 +3,6 @@ pandas
 torch
 mlflow
 scikit-learn
-# TFLite export. Linux, macOS, or WSL are safest. See README for the ONNX and Keras fallbacks.
-ai-edge-torch
+# Runs .tflite files for checks and evaluation
+ai-edge-litert
+# TFLite export is separate (requirements-export.txt, Linux or macOS only), see README

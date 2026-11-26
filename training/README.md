@@ -4,20 +4,36 @@ The model marks the moment each rep ends. Its input, output, preprocessing, and 
 
 ## Setup
 
-PyTorch and the TFLite converters may not have wheels for the newest Python, so use Python 3.11 or 3.12.
+Training, evaluation, and checking `.tflite` files run natively, including on Windows. Use Python 3.11 to 3.13. From the repo root:
 
 ```bash
 cd training
-python -m venv .venv
+python -m venv .venv              # Windows with several versions: py -3.13 -m venv .venv
 .venv\Scripts\activate            # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-`ai-edge-torch` may not install on native Windows. If it fails, use WSL or Google Colab for the export step only.
+## TFLite export
+
+The converter (`litert-torch`, formerly `ai-edge-torch`) has no Windows build, so the export runs in Docker. Start Docker Desktop, then from the repo root in PowerShell (the image takes about 3 GB):
+
+```powershell
+docker build -t 67counter-export training
+docker run --rm -v "${PWD}:/repo" 67counter-export python export_tflite.py --out ../models/67counter_v0.tflite
+training\.venv\Scripts\python training\check_tflite.py models\67counter_v0.tflite
+```
+
+Add `--weights <state_dict file>` (a path inside `training/`) to export a trained model. The export fails if the TFLite output differs from PyTorch by more than 1e-4.
+
+| File | Purpose |
+| --- | --- |
+| `model.py` | `RepNet`, a small 1D CNN with the contract input and output shapes |
+| `export_tflite.py` | PyTorch to `.tflite`, with a parity check |
+| `check_tflite.py` | Checks shapes and output range, lists the ops, and times inference |
 
 ## Pipeline
 
-1. **Prove the export first.** Export a tiny dummy model with input `[1, 60, 12]` and output `[1, 60]` to `.tflite`, and run it with the TFLite interpreter on the laptop. Try `ai-edge-torch` first, then PyTorch to ONNX to TFLite. If both fail, train the same small model in Keras.
+1. **Prove the export first.** Done with the untrained dummy model `67counter_v0.tflite` (laptop check only, still to be tested on the phone).
 2. **Data loader.** Read the training export (`labels.csv` plus `runs/*.npz`). Until real runs exist, use synthetic data: `python tools/make_fake_runs.py --n 60 --export data/fake/export` from the repo root.
 3. **Labels.** Run `tools/rule_counter.py` on each run to get `rep_end_ms`, and keep only runs where its total matches `label_rep_count`. Turn each rep end into a positive frame (or a small Gaussian bump) in a per frame target.
 4. **Windows and splits.** Cut 60 frame windows with a stride, and split train and test by person or by run so the test set is never seen in training.
